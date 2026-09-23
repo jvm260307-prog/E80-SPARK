@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E80 SPARK — Dual Spectrum Wireless Power Link 3D Simulation</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for sleek icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- 3D Canvas Container -->
+    <div id="canvas-container"></div>
+
+    <!-- Top Overlay Header -->
+    <header class="app-header">
+        <div class="brand">
+            <div class="brand-badge"><i class="fa-solid fa-bolt-lightning"></i></div>
+            <div class="brand-text">
+                <h1>E80 SPARK</h1>
+                <span>DUAL SPECTRUM WIRELESS POWER LINK</span>
+            </div>
+        </div>
+        <div class="status-pill-group">
+            <div id="status-mode-pill" class="status-pill mode-hybrid">
+                <i class="fa-solid fa-arrows-rotate"></i> HYBRID AUTO
+            </div>
+            <div id="status-link-pill" class="status-pill link-laser">
+                <i class="fa-solid fa-laser"></i> LASER ACTIVE
+            </div>
+        </div>
+        <div class="header-actions">
+            <button id="btn-aperture-study" class="study-nav-btn" title="Open Microwave Aperture Study">
+                <i class="fa-solid fa-satellite-dish"></i> APERTURE STUDY
+            </button>
+            <button id="btn-info" class="icon-btn" title="Project Information">
+                <i class="fa-solid fa-circle-info"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Side Control Panel -->
+    <aside class="control-panel">
+        <div class="panel-header">
+            <h2><i class="fa-solid fa-chart-line"></i> LINK TELEMETRY</h2>
+            <span class="live-indicator"><span class="dot"></span> LIVE</span>
+        </div>
+
+        <div class="panel-content">
+            <!-- Active State Card -->
+            <div class="metric-card active-state-card">
+                <div class="metric-row">
+                    <span class="label">ATMOSPHERE</span>
+                    <span id="val-weather" class="value highlight-text">CLEAR AIR</span>
+                </div>
+                <div class="metric-row">
+                    <span class="label">ACTIVE CHANNEL</span>
+                    <span id="val-channel" class="value badge-laser">LASER (1550 nm)</span>
+                </div>
+                <div class="metric-row">
+                    <span class="label">DRONE TRACKER</span>
+                    <span id="val-tracker-status" class="value badge-locked"><i class="fa-solid fa-lock"></i> LOCKED</span>
+                </div>
+                <div class="metric-row">
+                    <span class="label">POWER TRANSFER</span>
+                    <span id="val-power-transfer" class="value status-active-text">ACTIVE</span>
+                </div>
+            </div>
+
+            <!-- Parameters Card -->
+            <div class="metric-card">
+                <div class="metric-group">
+                    <div class="metric-item">
+                        <span class="sub-label">ELECTRICAL INPUT</span>
+                        <div class="val-unit"><span id="val-input" class="num">100</span> <span class="unit">W</span></div>
+                    </div>
+                    <div class="metric-item">
+                        <span class="sub-label">LINK DISTANCE</span>
+                        <div class="val-unit"><span id="val-distance" class="num">2.0</span> <span class="unit">km</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Output Metric Highlight -->
+            <div class="metric-card output-card">
+                <div class="output-header">
+                    <span class="label">RECEIVED POWER OUTPUT</span>
+                </div>
+                
+                <div id="laser-output-row" class="output-row active-output">
+                    <div class="output-meta">
+                        <span class="channel-name"><i class="fa-solid fa-sun"></i> LASER DC OUTPUT</span>
+                        <span class="eff-tag">PV Eff: 45%</span>
+                    </div>
+                    <div class="output-value"><span id="val-laser-out">16.17</span> <span class="unit">W</span></div>
+                </div>
+
+                <div id="microwave-output-row" class="output-row inactive-output">
+                    <div class="output-meta">
+                        <span class="channel-name"><i class="fa-solid fa-wifi"></i> MICROWAVE REF</span>
+                        <span class="ref-tag">Ref Simulation</span>
+                    </div>
+                    <div class="output-value"><span id="val-microwave-out">~6–8</span> <span class="unit">W</span></div>
+                </div>
+            </div>
+
+            <!-- Coupling Card -->
+            <div class="metric-card">
+                <div class="metric-row">
+                    <span class="label">GEOMETRIC COUPLING</span>
+                    <span id="val-coupling" class="value highlight-text">99.9%</span>
+                </div>
+                <div class="metric-row">
+                    <span class="label">OPTICAL ATTENUATION</span>
+                    <span id="val-attenuation" class="value">0.233 dB/km</span>
+                </div>
+            </div>
+
+            <!-- Minimal Energy Flow -->
+            <div class="energy-flow-card">
+                <div class="flow-title">POWER TRANSMISSION CHAIN</div>
+                <div class="flow-diagram">
+                    <div class="flow-step">100W IN</div>
+                    <i class="fa-solid fa-chevron-right flow-arrow"></i>
+                    <div id="flow-beam" class="flow-step beam-step laser-bg">LASER</div>
+                    <i class="fa-solid fa-chevron-right flow-arrow"></i>
+                    <div class="flow-step">RECEIVER</div>
+                    <i class="fa-solid fa-chevron-right flow-arrow"></i>
+                    <div id="flow-output" class="flow-step out-step">16.17W DC</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Follow Drone HUD Info Overlay -->
+    <div id="follow-drone-hud" class="follow-drone-overlay">
+        <div class="hud-item"><span class="hud-tag">TRACKER:</span> <span id="fd-tracker-val" class="status-locked"><i class="fa-solid fa-lock"></i> LOCKED</span></div>
+        <div class="hud-item"><span class="hud-tag">GEOMETRIC COUPLING:</span> <span id="fd-coupling-val">99.9%</span></div>
+        <div class="hud-item"><span class="hud-tag">POWER TRANSFER:</span> <span id="fd-power-val" class="status-active">ACTIVE</span></div>
+    </div>
+
+    <!-- Bottom Toolbar Controls -->
+    <div class="bottom-toolbar">
+        <!-- Operating Mode Controls -->
+        <div class="control-group">
+            <span class="group-label">TRANSMISSION MODE</span>
+            <div class="btn-toggle-group">
+                <button id="btn-mode-hybrid" class="btn-toggle active" data-mode="HYBRID">
+                    <i class="fa-solid fa-arrows-rotate"></i> HYBRID / AUTO
+                </button>
+                <button id="btn-mode-laser" class="btn-toggle" data-mode="LASER">
+                    <i class="fa-solid fa-laser"></i> LASER ONLY
+                </button>
+                <button id="btn-mode-microwave" class="btn-toggle" data-mode="MICROWAVE">
+                    <i class="fa-solid fa-wifi"></i> MICROWAVE ONLY
+                </button>
+            </div>
+        </div>
+
+        <div class="divider-v"></div>
+
+        <!-- Weather Condition Controls -->
+        <div class="control-group">
+            <span class="group-label">ATMOSPHERIC CONDITION</span>
+            <div class="btn-toggle-group">
+                <button id="btn-weather-clear" class="btn-toggle weather-btn active" data-weather="CLEAR">
+                    <i class="fa-solid fa-sun"></i> CLEAR AIR
+                </button>
+                <button id="btn-weather-haze" class="btn-toggle weather-btn" data-weather="HAZE">
+                    <i class="fa-solid fa-smog"></i> STRONG HAZE
+                </button>
+                <button id="btn-weather-fog" class="btn-toggle weather-btn" data-weather="FOG">
+                    <i class="fa-solid fa-cloud-meatball"></i> DENSE FOG
+                </button>
+                <button id="btn-weather-rain" class="btn-toggle weather-btn" data-weather="RAIN">
+                    <i class="fa-solid fa-cloud-showers-heavy"></i> HEAVY RAIN
+                </button>
+            </div>
+        </div>
+
+        <div class="divider-v"></div>
+
+        <!-- Atmospheric Fine-Tuning Sliders -->
+        <div class="control-group sliders-group">
+            <span class="group-label">FINE-TUNING CONTROLS</span>
+            <div class="slider-row">
+                <span class="slider-label"><i class="fa-solid fa-eye"></i> VISIBILITY</span>
+                <input type="range" id="slider-visibility" min="0.5" max="15" step="0.5" value="15">
+                <span id="val-visibility-num" class="slider-val">15.0 km</span>
+            </div>
+            <div class="slider-row">
+                <span class="slider-label"><i class="fa-solid fa-cloud-rain"></i> RAIN DENSITY</span>
+                <input type="range" id="slider-rain" min="0" max="100" step="5" value="0">
+                <span id="val-rain-num" class="slider-val">0%</span>
+            </div>
+        </div>
+
+        <div class="divider-v"></div>
+
+        <!-- View & Simulation Actions -->
+        <div class="control-group">
+            <span class="group-label">VIEW & TRACKING ACTIONS</span>
+            <div class="action-btn-group">
+                <button id="btn-test-track-loss" class="btn-action btn-track-loss" title="Simulate Drone Divergence outside Tracking Envelope">
+                    <i class="fa-solid fa-triangle-exclamation"></i> TEST TRACK LOSS
+                </button>
+                <button id="btn-follow-drone" class="btn-action" title="Toggle Camera Drone Tracking">
+                    <i class="fa-solid fa-crosshairs"></i> <span id="label-follow">FOLLOW DRONE</span>
+                </button>
+                <button id="btn-reset-cam" class="btn-action" title="Reset Camera View">
+                    <i class="fa-solid fa-video"></i> RESET CAM
+                </button>
+                <button id="btn-pause" class="btn-action" title="Pause / Play Simulation">
+                    <i class="fa-solid fa-pause"></i> <span id="label-pause">PAUSE</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3D HUD Distance Marker -->
+    <div id="hud-link-marker" class="hud-distance-indicator">
+        <div class="line"></div>
+        <div class="badge"><i class="fa-solid fa-arrows-left-right"></i> 2.0 km LINK</div>
+        <div class="line"></div>
+    </div>
+
+    <!-- Microwave Aperture Study Floating Panel -->
+    <div id="aperture-study-panel" class="study-card-overlay">
+        <div class="study-header">
+            <div class="study-title">
+                <i class="fa-solid fa-satellite-dish study-icon"></i>
+                <div>
+                    <h3>MICROWAVE APERTURE STUDY</h3>
+                    <p>DIRECTIVITY & BEAM DEMONSTRATION</p>
+                </div>
+            </div>
+            <button id="btn-close-study" class="modal-close">&times;</button>
+        </div>
+
+        <div class="study-body">
+            <!-- Aperture Selector Buttons & Slider -->
+            <div class="aperture-control-box">
+                <div class="aperture-header-row">
+                    <span class="ap-label">SELECT APERTURE:</span>
+                </div>
+                
+                <!-- Quick Aperture Preset Buttons -->
+                <div class="aperture-btn-group">
+                    <button class="btn-aperture-select active" data-aperture="1">1 m</button>
+                    <button class="btn-aperture-select" data-aperture="2">2 m</button>
+                    <button class="btn-aperture-select" data-aperture="3">3 m</button>
+                    <button class="btn-aperture-select" data-aperture="4">4 m</button>
+                    <button class="btn-aperture-select" data-aperture="5">5 m</button>
+                </div>
+
+                <input type="range" id="slider-mw-aperture" min="1" max="5" step="1" value="1">
+            </div>
+
+            <!-- Compact Presentation Status Card -->
+            <div class="compact-status-card">
+                <div class="status-row">
+                    <span class="s-label">Aperture:</span>
+                    <span id="val-study-aperture" class="s-val-bold">1 m</span>
+                </div>
+                <div class="status-row">
+                    <span class="s-label">Beamwidth:</span>
+                    <span id="val-study-beamwidth" class="s-val-bold">8.5655°</span>
+                </div>
+                <div class="status-row highlight-status">
+                    <span class="s-label">Geometric Coupling:</span>
+                    <span id="val-study-coupling" class="s-val-highlight">0.0000446%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Project Info Modal -->
+    <div id="info-modal" class="modal-backdrop">
+        <div class="modal-card">
+            <button id="btn-close-modal" class="modal-close">&times;</button>
+            <div class="modal-header">
+                <i class="fa-solid fa-bolt-lightning modal-icon"></i>
+                <div>
+                    <h3>E80 SPARK</h3>
+                    <p>Dual Spectrum Wireless Power Link</p>
+                </div>
+            </div>
+            <div class="modal-body">
+                <p><strong>Project Concept:</strong> Hybrid Wireless Power Transmission system designed for a fixed 2 km link operating with 100 W electrical power input.</p>
+                
+                <div class="spec-grid">
+                    <div class="spec-item">
+                        <span class="spec-key">Laser Spectrum</span>
+                        <span class="spec-val">1550 nm (40 W Optical)</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-key">Laser Efficiencies</span>
+                        <span class="spec-val">40% E-O | 45% PV</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-key">Microwave Spectrum</span>
+                        <span class="spec-val">2.45 GHz (&lambda; = 0.1224 m)</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-key">Microwave Aperture</span>
+                        <span class="spec-val">1 m Reference</span>
+                    </div>
+                </div>
+
+                <div class="disclaimer-box">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <p><strong>Reference Simulation Note:</strong> Microwave transmission metrics are student-simulation reference values designed to demonstrate complementary weather-adaptive handover, pending full MATLAB/Simulink multi-physics validation.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="btn-modal-ok" class="btn-primary">Got it</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Three.js & Controls from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
